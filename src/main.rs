@@ -335,15 +335,105 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             screen_region: [100.0, 32.0, 16.0, 24.0],
             sheet_region: [100.0 / 123.0, 32.0 / 224.0, 16.0 / 123.0, 24.0 / 224.0],
         },
-        // squiggle
+        // squiggle 0
         GPUSprite {
             screen_region: [0.0, 68.0, 24.0, 16.0],
             sheet_region: [0.0, 68.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
         },
-        // square
+        // squiggle 1
+        GPUSprite {
+            screen_region: [36.0, 64.0, 16.0, 24.0],
+            sheet_region: [0.0 / 123.0, 64.0 / 224.0, 16.0 / 123.0, 24.0 / 224.0],
+        },
+        // squiggle 2
+        GPUSprite {
+            screen_region: [64.0, 68.0, 24.0, 16.0],
+            sheet_region: [64.0 /123.0, 68.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // squiggle 3
+        GPUSprite {
+            screen_region: [100.0, 64.0, 24.0, 16.0],
+            sheet_region: [100.0 / 123.0, 64.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // square 0
         GPUSprite {
             screen_region: [4.0, 100.0, 16.0, 16.0],
             sheet_region: [4.0 / 123.0, 100.0 / 224.0, 16.0 / 123.0, 16.0 / 224.0],
+        },
+        // square 1
+        GPUSprite {
+            screen_region: [36.0, 100.0, 16.0, 16.0],
+            sheet_region: [36.0 / 123.0, 100.0 / 224.0, 16.0 / 123.0, 16.0 / 224.0],
+        },
+        // square 2
+        GPUSprite {
+            screen_region: [68.0, 100.0, 16.0, 16.0],
+            sheet_region: [68.0 / 123.0, 100.0 / 224.0, 16.0 / 123.0, 16.0 / 224.0],
+        },
+        // square 3
+        GPUSprite {
+            screen_region: [100.0, 100.0, 16.0, 16.0],
+            sheet_region: [100.0 / 123.0, 100.0 / 224.0, 16.0 / 123.0, 16.0 / 224.0],
+        },
+        // dark squiggle 0
+        GPUSprite {
+            screen_region: [0.0, 132.0, 24.0, 16.0],
+            sheet_region: [0.0 / 123.0, 132.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // dark squiggle 1
+        GPUSprite {
+            screen_region: [36.0, 128.0, 16.0, 24.0],
+            sheet_region: [36.0 / 123.0, 128.0 / 224.0, 16.0 / 123.0, 24.0 / 224.0],
+        },
+        // dark squiggle 2
+        GPUSprite {
+            screen_region: [64.0, 132.0, 24.0, 16.0],
+            sheet_region: [64.0 /123.0, 132.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // dark squiggle 3
+        GPUSprite {
+            screen_region: [100.0, 128.0, 24.0, 16.0],
+            sheet_region: [100.0 / 123.0, 128.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // light sideways L0
+        GPUSprite {
+            screen_region: [0.0, 164.0, 24.0, 16.0],
+            sheet_region: [0.0, 164.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // light sideways L1
+        GPUSprite {
+            screen_region: [36.0, 160.0, 16.0, 24.0],
+            sheet_region: [36.0 / 123.0, 160.0 / 224.0, 16.0 / 123.0, 24.0 / 224.0],
+        },
+        // light sideways L2
+        GPUSprite {
+            screen_region: [64.0, 164.0, 24.0, 16.0],
+            sheet_region: [64.0 / 123.0, 164.0 / 224.0, 24.0 / 123.0, 16.0 / 224.0],
+        },
+        // light sideways L3
+        GPUSprite {
+            screen_region: [100.0, 160.0, 16.0, 24.0],
+            sheet_region: [100.0 / 123.0, 160.0 / 224.0, 16.0 / 123.0, 24.0 / 224.0],
+        },
+        // straight 0
+        GPUSprite {
+            screen_region: [8.0, 188.0, 8.0, 32.0],
+            sheet_region: [8.0 / 123.0, 188.0 / 224.0, 8.0 / 123.0, 32.0 / 224.0],
+        },
+        // straight 1
+        GPUSprite {
+            screen_region: [28.0, 200.0, 32.0, 8.0],
+            sheet_region: [28.0 / 123.0, 200.0 / 224.0, 32.0 / 123.0, 8.0 / 224.0],
+        },
+        // straight 2
+        GPUSprite {
+            screen_region: [72.0, 188.0, 8.0, 32.0],
+            sheet_region: [72.0 / 123.0, 188.0 / 224.0, 8.0 / 123.0, 32.0 / 224.0],
+        },
+        // straight 3
+        GPUSprite {
+            screen_region: [91.0, 200.0, 32.0, 8.0],
+            sheet_region: [91.0 / 123.0, 200.0 / 224.0, 32.0 / 123.0, 8.0 / 224.0],
         },
     ];
 
@@ -356,14 +446,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     // Initialize sprite positions within the grid
     let mut sprite_position: [f32; 2] = [75.0, 192.0];
-    // let mut sprite_position_0: [f32; 2] = [51.0, 192.0];
-    let mut sprite_position_1: [f32; 2] = [102.0, 192.0];
-    // let sprite_position_2: [f32; 2] = [153.0, 10.0];
-    // let sprite_position_3: [f32; 2] = [51.0, 100.0];
 
     // current sprite
     let mut curr_sprite_index = 0;
-
 
     // initialize vertical position
     let mut vertical_position: f32 = 0.0;
@@ -441,55 +526,21 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     if sprite_position[0] < 0.0 {
                         sprite_position[0] = 0.0;
                     }
-                    // sprite_position_0[0] -= cell_width;
-
-                    // if sprite_position_0[0] < 0.0 {
-                    //     sprite_position_0[0] = 0.0;
-                    // }
                 }
-                // if input.is_key_pressed(winit::event::VirtualKeyCode::A) {
-                //     sprite_position_1[0] -= cell_width;
 
-                //     if sprite_position_1[0] < 0.0 {
-                //         sprite_position_1[0] = 0.0;
-                //     }
-                // }
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Right) {
                     sprite_position[0] += cell_width;
 
                     if sprite_position[0] < window_width {
                         sprite_position[0] += cell_width;
                     }
-                    // sprite_position_0[0] += cell_width;
-
-                    // if sprite_position_0[0] < window_width {
-                    //     sprite_position_0[0] += cell_width;
-                    // }
                 }
-                // if input.is_key_pressed(winit::event::VirtualKeyCode::D) {
-                //     sprite_position_1[0] += cell_width;
-
-                //     if sprite_position_1[0] < window_width {
-                //         sprite_position_1[0] += cell_width;
-                //     }
-                // }
 
                 //update sprite position
                 sprites[curr_sprite_index].screen_region[0] = sprite_position[0];
                 sprites[curr_sprite_index].screen_region[1] = sprite_position[1];
 
-                // sprites[sprite_rotation].screen_region[0] = sprite_position_0[0];
-                // sprites[sprite_rotation].screen_region[1] = sprite_position_0[1];
-                // sprites[sprite_rotation+4].screen_region[0] = sprite_position_1[0];
-                // sprites[sprite_rotation+4].screen_region[1] = sprite_position_1[1];
-
-                // sprites[2].screen_region[0] = sprite_position_2[0];
-                // sprites[2].screen_region[1] = sprite_position_2[1];
-                // sprites[3].screen_region[0] = sprite_position_3[0];
-                // sprites[3].screen_region[1] = sprite_position_3[1];
-
                 vertical_position += scroll_speed; // You can adjust the scroll speed as needed
-
 
                 // Update the Y-coordinate of each sprite
                 if vertical_position > camera.screen_size[1] {
@@ -541,7 +592,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
                     rpass.set_bind_group(0, &sprite_bind_group, &[]);
                     rpass.set_bind_group(1, &texture_bind_group, &[]);
-                    // draw two triangles per sprite, and sprites-many sprites.
+                    // draw two triangles per sprite, and sprite at the current index.
                     // this uses instanced drawing, but it would also be okay
                     // to draw 6 * sprites.len() vertices and use modular arithmetic
                     // to figure out which sprite we're drawing.
