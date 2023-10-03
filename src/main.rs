@@ -357,12 +357,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             sheet_region: [0.0 / 130.0, 64.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
             //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
-        // squiggle 1 (continued)
-        GPUSprite {
-            screen_region: [32.0, 64.0, 32.0, 32.0],
-            sheet_region: [0.0 / 130.0, 64.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        },
+        // // squiggle 1 (continued)
+        // GPUSprite {
+        //     screen_region: [32.0, 64.0, 32.0, 32.0],
+        //     sheet_region: [0.0 / 130.0, 64.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
+        //     //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        // },
         // squiggle 2
         GPUSprite {
             screen_region: [64.0, 64.0, 32.0, 32.0],
@@ -482,7 +482,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let cell_height = window_height / 160.0;
 
     // Initialize sprite positions within the grid
-    let mut sprite_position: [f32; 2] = [75.0, 192.0];
+    let mut sprite_position: [f32; 2] = [75.0, 158.0];
 
     // current sprite
     let mut curr_sprite_index = 0;
@@ -581,7 +581,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 vertical_position += scroll_speed; // You can adjust the scroll speed as needed
 
                 // check if the piece has hit the bottom of the screen
-                if vertical_position > camera.screen_size[1] {
+                if vertical_position+32.0 > camera.screen_size[1] {
                     let difference = 4 - (curr_sprite_index % 4);
                     curr_sprite_index += difference;
 
