@@ -358,12 +358,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             sheet_region: [0.0 / 130.0, 64.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
             //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
-        // squiggle 1 (continued)
-        GPUSprite {
-            screen_region: [32.0, 64.0, 32.0, 32.0],
-            sheet_region: [0.0 / 130.0, 64.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        },
         // squiggle 2
         GPUSprite {
             screen_region: [64.0, 64.0, 32.0, 32.0],
@@ -412,7 +406,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             sheet_region: [32.0 / 130.0, 128.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
             //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
-       // dark squiggle 2 (continued)
+       // dark squiggle 2 
         GPUSprite {
             screen_region: [64.0, 128.0, 32.0, 32.0],
             sheet_region: [64.0 / 130.0, 128.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
@@ -466,7 +460,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             sheet_region: [64.0 / 130.0, 192.0 / 227.0, 32.0 / 130.0, 32.0 / 227.0],
             //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
         },
-        // straight 3 (continued)
+        // straight 3 
         GPUSprite {
             screen_region: [96.0, 192.0, 32.0, 32.0],
             sheet_region: [96.0 / 130.0, 192.0 / 232.0, 32.0 / 130.0, 32.0 / 227.0],
@@ -490,7 +484,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     // initialize vertical position
     let mut vertical_position: f32 = 0.0;
-    let scroll_speed: f32 = 0.2;
+    let scroll_speed: f32 = 0.8;
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
 
