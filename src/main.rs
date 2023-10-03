@@ -2,7 +2,6 @@
 
 use bytemuck::{Pod, Zeroable};
 use std::{borrow::Cow, mem};
-
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -477,7 +476,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let cell_height = window_height / 160.0;
 
     // Initialize sprite positions within the grid
-    let mut sprite_position: [f32; 2] = [75.0, 192.0];
+    let mut sprite_position: [f32; 2] = [75.0, 158.0];
 
     // current sprite
     let mut curr_sprite_index = 0;
@@ -575,14 +574,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                 vertical_position += scroll_speed; // You can adjust the scroll speed as needed
 
-                // Update the Y-coordinate of each sprite
-                if vertical_position > camera.screen_size[1] {
-                    if curr_sprite_index % 4 == 0 {
-                        curr_sprite_index += 4;
-                    } else {
-                        let difference = 4 - (curr_sprite_index % 4);
-                        curr_sprite_index += difference;
-                    }
+                // check if the piece has hit the bottom of the screen
+                if vertical_position+32.0 > camera.screen_size[1] {
+                    let difference = 4 - (curr_sprite_index % 4);
+                    curr_sprite_index += difference;
 
                     if curr_sprite_index >= sprites.len() {
                         curr_sprite_index = 0; // Wrap around to the first sprite
@@ -590,6 +585,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     sprites[curr_sprite_index].screen_region[1] = camera.screen_size[1];
                     vertical_position = 0.0;
                 }
+                // Update the Y-coordinate of each sprite
                 sprites[curr_sprite_index].screen_region[1] = sprites[curr_sprite_index].screen_region[1] - vertical_position;
                 
                 // Then send the data to the GPU!
