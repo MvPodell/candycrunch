@@ -1,6 +1,7 @@
 // TODO: remove SpriteOption if it doesn't do anything
 
 use bytemuck::{Pod, Zeroable};
+use image::math::Rect;
 use std::{borrow::Cow, mem};
 use winit::{
     event::{Event, WindowEvent},
@@ -31,7 +32,7 @@ struct GPUCamera {
 struct GPUSprite {
     screen_region: [f32; 4],
     sheet_region: [f32; 4],
-    //cel_region:[f32; 16],
+    //cell_region:[f32; 16],
 }
 
 #[repr(C)]
@@ -344,169 +345,169 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         GPUSprite {
             screen_region: [0.0, 0.0, 32.0, 32.0],
             sheet_region: [0.0, 0.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         }, 
         // T2
         GPUSprite {
             screen_region: [32.0, 0.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 0.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // T3
         GPUSprite {
             screen_region: [64.0, 0.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 0.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // T4
         GPUSprite {
             screen_region: [96.0, 0.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 0.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // sideways L0
         GPUSprite {
             screen_region: [0.0, 32.0, 32.0, 32.0],
             sheet_region: [0.0, 32.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // sideways L1
         GPUSprite {
             screen_region: [32.0, 32.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 32.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // sideways L2
         GPUSprite {
             screen_region: [64.0, 32.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 32.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // sideways L3
         GPUSprite {
             screen_region: [96.0, 32.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 32.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // squiggle 0
         GPUSprite {
             screen_region: [0.0, 64.0, 32.0, 32.0],
             sheet_region: [0.0, 64.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // squiggle 1
         GPUSprite {
             screen_region: [32.0, 64.0, 32.0, 32.0],
             sheet_region: [0.0 / 150.0, 64.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // squiggle 2
         GPUSprite {
             screen_region: [64.0, 64.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 64.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // squiggle 3
         GPUSprite {
             screen_region: [96.0, 64.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 64.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // square 0
         GPUSprite {
             screen_region: [0.0, 96.0, 32.0, 32.0],
             sheet_region: [0.0, 96.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // square 1
         GPUSprite {
             screen_region: [32.0, 96.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 96.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // square 2
         GPUSprite {
             screen_region: [64.0, 96.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 96.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // square 3
         GPUSprite {
             screen_region: [96.0, 96.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 96.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // dark squiggle 0
         GPUSprite {
             screen_region: [0.0, 128.0, 32.0, 32.0],
             sheet_region: [0.0, 128.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // dark squiggle 1
         GPUSprite {
             screen_region: [32.0, 128.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 128.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
        // dark squiggle 2 (continued)
         GPUSprite {
             screen_region: [64.0, 128.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 128.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // dark squiggle 3
         GPUSprite {
             screen_region: [96.0, 128.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 128.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // light sideways L0
         GPUSprite {
             screen_region: [0.0, 160.0, 32.0, 32.0],
             sheet_region: [0.0, 160.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // light sideways L1
         GPUSprite {
             screen_region: [32.0, 160.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 160.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // light sideways L2
         GPUSprite {
             screen_region: [64.0, 160.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 160.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // light sideways L3
         GPUSprite {
             screen_region: [96.0, 160.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 160.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // straight 0
         GPUSprite {
             screen_region: [0.0, 192.0, 32.0, 32.0],
             sheet_region: [0.0, 192.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
         },
         // straight 1
         GPUSprite {
             screen_region: [32.0, 192.0, 32.0, 32.0],
             sheet_region: [32.0 / 150.0, 192.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // straight 2
         GPUSprite {
             screen_region: [64.0, 192.0, 32.0, 32.0],
             sheet_region: [64.0 / 150.0, 192.0 / 227.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
         },
         // straight 3 (continued)
         GPUSprite {
             screen_region: [96.0, 192.0, 32.0, 32.0],
             sheet_region: [96.0 / 150.0, 192.0 / 232.0, 32.0 / 150.0, 32.0 / 227.0],
-            //cel_region: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            //cell_region: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         },
         // white cell 1
         GPUSprite {
@@ -539,11 +540,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let window_height = config.height as f32;
 
     // here divide by a number to create the number of grids
-    let cell_width = window_width / 100.0;
+    let cell_width = window_width / 200.0;
     // let cell_height = window_height / 160.0;
 
     // Initialize sprite positions within the grid
-    let mut sprite_position: [f32; 2] = [75.0, 158.0];
+    let mut sprite_position: [f32; 2] = [131.0, 158.0];
 
     // current sprite
     let mut curr_sprite_index = 0;
@@ -623,16 +624,16 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Left) {
                     sprite_position[0] -= cell_width;
 
-                    if sprite_position[0] < 0.0 {
-                        sprite_position[0] = 0.0;
+                    if sprite_position[0] <= 91.0 {
+                        sprite_position[0] = 91.0;
                     }
                 }
 
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Right) {
-                    sprite_position[0] += cell_width;
 
-                    if sprite_position[0] > window_width {
-                        sprite_position[0] = window_width;
+                    // println!("{}", window_width);
+                    if sprite_position[0] <= 163.0 {
+                        sprite_position[0] += cell_width;
                     }
                 }
 
@@ -725,12 +726,15 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             view: &view,
                             resolve_target: None,
                             ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                                load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                                 store: true,
                             },
                         })],
                         depth_stencil_attachment: None,
                     });
+
+
+                    
                     rpass.set_pipeline(&render_pipeline);
                     if SPRITES == SpriteOption::VertexBuffer {
                         rpass.set_vertex_buffer(0, buffer_sprite.slice(..));
@@ -745,7 +749,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     // rpass.draw(0..6, (curr_cell_index as u32)..(curr_cell_index as u32)+1);
                     // rpass.draw(0..6, (curr_sprite_index as u32)..(curr_sprite_index as u32)+1);
                     rpass.draw(0..6, 32..(curr_cell_index as u32));
+
+                    
                 }
+
+                
                 queue.submit(Some(encoder.finish()));
                 frame.present();
                 window.request_redraw();
@@ -866,4 +874,3 @@ async fn load_texture(
     );
     Ok((texture, img))
 }
-
