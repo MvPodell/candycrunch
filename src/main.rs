@@ -1,7 +1,7 @@
 // TODO: remove SpriteOption if it doesn't do anything
 
 use bytemuck::{Pod, Zeroable};
-use image::math::Rect;
+// use image::math::Rect;
 use std::{borrow::Cow, mem};
 use winit::{
     event::{Event, WindowEvent},
@@ -15,9 +15,9 @@ mod input;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Occupation {
     Empty = 0,
-    White = 1,
-    Light = 2,
-    Dark = 3,
+    // White = 1,
+    // Light = 2,
+    // Dark = 3,
 }
 
 #[repr(C)]
@@ -62,30 +62,30 @@ compile_error!("Can't choose both vbuf and uniform sprite features");
 // #[cfg(feature = "webgl")]
 // const USE_STORAGE: bool = false;
 
-impl GPUSprite {
-    // Constructor method to create a new GPUSprite
-    fn new(left_x: f32, left_y: f32, width_px: f32, height_px: f32) -> Self {
-        GPUSprite {
-            screen_region: [left_x, left_y, width_px, height_px],
-            sheet_region: [left_x / 150.0, left_y / 227.0, width_px/ 150.0, height_px / 227.0],
-        }
-    }
-}
+// impl GPUSprite {
+//     // Constructor method to create a new GPUSprite
+//     fn new(left_x: f32, left_y: f32, width_px: f32, height_px: f32) -> Self {
+//         GPUSprite {
+//             screen_region: [left_x, left_y, width_px, height_px],
+//             sheet_region: [left_x / 150.0, left_y / 227.0, width_px/ 150.0, height_px / 227.0],
+//         }
+//     }
+// }
 
-impl Grid {
-    // Function to check if the elements are 0 or 1
-    fn check_elements(&self, ) -> bool {
-        for row in self.rows.iter() {
-            for &element in row.iter() {
-                if element != Occupation::Empty {
-                    return false; // Element is occupied
-                }
-            }
-        }
-        true // All elements are either 0 or 1, return true
-    }
+// impl Grid {
+//     // Function to check if the elements are 0 or 1
+//     fn check_elements(&self, ) -> bool {
+//         for row in self.rows.iter() {
+//             for &element in row.iter() {
+//                 if element != Occupation::Empty {
+//                     return false; // Element is occupied
+//                 }
+//             }
+//         }
+//         true // All elements are either 0 or 1, return true
+//     }
 
-}
+// }
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let size = window.inner_size();
@@ -335,8 +335,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
-    let grid: Grid = Grid { rows: [[Occupation::Empty; 10]; 24]};
-    let mut visible_sprites: Vec<GPUSprite> = Vec::new();
+    // let grid: Grid = Grid { rows: [[Occupation::Empty; 10]; 24]};
     let mut sprites: Vec<GPUSprite> = vec![ 
         // these sprites initial locations are determined by sprite_position_x
         // screen_region [x,y,z,w] = top left corner x, top left corner y, width, height
@@ -525,9 +524,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             sheet_region: [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
         },
     ];
-    let mut cell_sprites: Vec<GPUSprite> = Vec::new();
-    for i in 0..240 {
-        let x = i as f32 * 32.0; // Adjust the x position for each instance
+    // let mut cell_sprites: Vec<GPUSprite> = Vec::new();
+    for _ in 0..240 {
         let sprite = GPUSprite {
             screen_region: [200.0, 0.0, 8.0, 8.0],
             sheet_region: [128.0 / 150.0, 0.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
@@ -537,7 +535,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
 
     let window_width = config.width as f32;
-    let window_height = config.height as f32;
+    // let window_height = config.height as f32;
 
     // here divide by a number to create the number of grids
     let cell_width = window_width / 200.0;
@@ -643,7 +641,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                 vertical_position += scroll_speed; // You can adjust the scroll speed as needed
                 
-                let mut curr_x = sprites[curr_sprite_index].screen_region[0];
+                let curr_x = sprites[curr_sprite_index].screen_region[0];
                 let mut curr_y = sprites[curr_sprite_index].screen_region[1] - vertical_position;
                 let mut collision = false;
 
@@ -651,7 +649,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 for curr_cell_index in 32..sprites.len() {
                     let x = sprites[curr_cell_index].screen_region[0];
                     let y = sprites[curr_cell_index].screen_region[1];
-                    println!("{}   {}", x, curr_x);
+                    // println!("{}   {}", x, curr_x);
                     if x == curr_x && y == curr_y {
                         // Update the screen_region of the current sprite
                         curr_y += 8.0;
