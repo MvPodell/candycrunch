@@ -662,10 +662,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     sprites[curr_cell_index].screen_region[0] = curr_x;
                     sprites[curr_cell_index].screen_region[1] = curr_y;
 
-                     // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    // adjust where the sprite is sampled from
                     sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
                     sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
 
                     let difference = 4 - (curr_sprite_index % 4);
@@ -696,10 +694,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     sprites[curr_cell_index].screen_region[0] = curr_x;
                     sprites[curr_cell_index].screen_region[1] = curr_y;
 
-                    // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    // adjust where the sprite is sampled from
                     sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
                     sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
 
                     let difference = 4 - (curr_sprite_index % 4);
