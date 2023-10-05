@@ -303,7 +303,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     surface.configure(&device, &config);
 
-    let (sprite_tex, _sprite_img) = load_texture("content/blocks3.png", None, &device, &queue)
+    let (sprite_tex, _sprite_img) = load_texture("content/blocks4.png", None, &device, &queue)
         .await
         .expect("Couldn't load spritesheet texture");
     let view_sprite = sprite_tex.create_view(&wgpu::TextureViewDescriptor::default());
@@ -664,6 +664,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     sprites[curr_cell_index].screen_region[0] = curr_x;
                     sprites[curr_cell_index].screen_region[1] = curr_y;
 
+                     // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
+                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
+                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
+
                     let difference = 4 - (curr_sprite_index % 4);
                     curr_sprite_index += difference;
 
@@ -691,6 +697,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     sprites[curr_cell_index].screen_region[0] = curr_x;
                     sprites[curr_cell_index].screen_region[1] = curr_y;
+
+                    // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
+                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
+                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
+                    sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
 
                     let difference = 4 - (curr_sprite_index % 4);
                     curr_sprite_index += difference;
