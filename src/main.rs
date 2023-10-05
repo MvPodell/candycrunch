@@ -544,11 +544,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     // let cell_height = window_height / 160.0;
 
     // Initialize sprite positions within the grid
-<<<<<<< HEAD
     let mut sprite_position: [f32; 2] = [131.0, 158.0];
-=======
-    let mut sprite_position: [f32; 2] = [75.0, 158.0];
->>>>>>> a81a518966863d55b6dcc2c28b6b1de72c9f4e55
 
     // current sprite
     let mut curr_sprite_index = 0;
@@ -663,7 +659,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     } 
                 }
 
-<<<<<<< HEAD
 
                 if collision {
                     sprites[curr_cell_index].screen_region[0] = curr_x;
@@ -693,12 +688,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     } 
                 }
 
-=======
-                // check if the piece has hit the bottom of the screen
-                if vertical_position+32.0 > camera.screen_size[1] {
-                    let difference = 4 - (curr_sprite_index % 4);
-                    curr_sprite_index += difference;
->>>>>>> a81a518966863d55b6dcc2c28b6b1de72c9f4e55
 
                     sprites[curr_cell_index].screen_region[0] = curr_x;
                     sprites[curr_cell_index].screen_region[1] = curr_y;
@@ -762,14 +751,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     rpass.draw(0..6, 32..(curr_cell_index as u32));
 
                     
-                    let scissor_rect = Rect {
-                        x: 5,
-                        y: 5,
-                        width: 4,
-                        height: 4,
-                    };
-
-                    rpass.set_scissor_rect(scissor_rect.x, scissor_rect.y, scissor_rect.width, scissor_rect.height);
                 }
 
                 
