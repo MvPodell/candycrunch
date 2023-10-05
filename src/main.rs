@@ -534,6 +534,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         sprites.push(sprite);
     }
 
+
     let window_width = config.width as f32;
     let window_height = config.height as f32;
 
