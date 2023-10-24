@@ -1,6 +1,7 @@
 // TODO: remove SpriteOption if it doesn't do anything
 
 use bytemuck::{Pod, Zeroable};
+use rand::Rng;
 // use image::math::Rect;
 use std::{borrow::Cow, mem};
 use winit::{
@@ -58,6 +59,12 @@ struct GameGrid {
     grid: [[Space; 10]; 20],
 }
 
+fn screen_to_grid(x: f32, y: f32) -> (usize, usize) {
+    let grid_x = (x as usize - 80) / 8;
+    let grid_y = 19 - (y as usize) / 8;
+    (grid_x, grid_y)
+}
+
 impl GameGrid {
     fn new() -> Self {
         let mut grid = [[Space::new(0.0, 0.0, "empty"); 10]; 20];
@@ -102,7 +109,7 @@ impl GameGrid {
     fn print_space(&self, x: usize, y: usize) {
         if x < 10 && y < 20 {
             let space = &self.grid[y][x];
-            println!("x: {}, y: {}, color: {}, filled: {}", space.x_space, space.y_space, space.color, space.filled);
+            println!("x: {}, y: {}, color: {}, filled: {}", x, y, space.color, space.filled);
         } else {
             println!("Invalid indices");
         }
@@ -502,30 +509,93 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         // these sprites initial locations are determined by sprite_position_x
         // screen_region [x,y,z,w] = top left corner x, top left corner y, width, height
         // sheet_region [x,y,z,w] = divided by spritesheet width, divided by spritesheet height, divided by spritesheet width, divided by spritesheet height, divided by spritesheet width, divided by spritesheet height,
-        // white cell 1
-        GPUSprite {
-            screen_region: [128.0, 0.0, 8.0, 8.0],
-            sheet_region: [128.0 / 150.0, 0.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
-        },
-        // dark blue cell 2
-        GPUSprite {
-            screen_region: [128.0, 32.0, 8.0, 8.0],
-            sheet_region: [128.0 / 150.0, 32.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
-        },
-        // light blue cell 3
-        GPUSprite {
-            screen_region: [128.0, 64.0, 8.0, 8.0],
-            sheet_region: [128.0 / 150.0, 64.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
-        },
+        
     ];
-    // let mut cell_sprites: Vec<GPUSprite> = Vec::new();
-    for _ in 0..480 {
-        let sprite = GPUSprite {
-            screen_region: [200.0, 0.0, 8.0, 8.0],
-            sheet_region: [128.0 / 150.0, 0.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
-        };
-        sprites.push(sprite);
+    // white cell 1
+    let sprite1 = GPUSprite {
+        screen_region: [128.0, 0.0, 8.0, 8.0],
+        sheet_region: [128.0 / 150.0, 0.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+    };
+    // dark blue cell 2
+    let sprite2 = GPUSprite {
+        screen_region: [128.0, 32.0, 8.0, 8.0],
+        sheet_region: [128.0 / 150.0, 32.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+    };
+    // light blue cell 3
+    let sprite3 = GPUSprite {
+        screen_region: [128.0, 64.0, 8.0, 8.0],
+        sheet_region: [128.0 / 150.0, 64.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+    };
+
+
+    let mut input = input::Input::default();
+    let mut game_grid = GameGrid::new();
+
+    let mut rng = rand::thread_rng();
+    let random_number: u32 = rng.gen_range(0..=2);
+
+    // for _ in 0..10{
+    //    sprites.push(sprite3); 
+    // }
+    // game_grid.fill_space(0, 0, "light blue");
+    
+
+    let mut x: f32 = 80.0;
+    let mut y: f32 = 152.0;
+    for _col in 0..10 {
+        for _row in 0..20 {
+            let mut rng = rand::thread_rng();
+            let random_number: u32 = rng.gen_range(0..=2);
+            let mut sprite: GPUSprite = sprite1;
+            
+            let (grid_x, grid_y) = screen_to_grid(x, y);
+
+            println!("{}", random_number);
+            // the sprites being chosen
+            match random_number {
+                0 =>{
+                    // white cell 1
+                    sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [128.0 / 150.0, 0.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                    };
+                    game_grid.fill_space(grid_x, grid_y,  "white");
+                    
+                } 
+                1 =>{
+                    // dark blue 2
+                    sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [128.0 / 150.0, 32.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                    };
+                    game_grid.fill_space(grid_x, grid_y,  "dark blue");
+                } 
+                2 =>{
+                    // light blue cell 3
+                    let sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [128.0 / 150.0, 64.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                    };
+                    game_grid.fill_space(grid_x, grid_y,  "light blue");
+                } 
+                _ => println!("Random number is out of range"),
+            }
+
+            
+        
+
+            
+            game_grid.print_space(grid_x,grid_y);
+            sprites.push(sprite);
+            y-= 8.0;
+
+        }
+
+        x += 8.0;
+        y = 152.0;
     }
+
+    
 
 
     let window_width = config.width as f32;
@@ -592,8 +662,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     queue.write_buffer(&buffer_sprite, 0, bytemuck::cast_slice(&sprites));
 
 
-    let mut input = input::Input::default();
-    let mut game_grid = GameGrid::new();
+
 
     // let mut game_over = false;
     // let mut show_end_screen = false;
@@ -643,11 +712,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
 
-                    // println!("{}", window_width);
-                    if sprite_position[1] >= -20.0 {
-                        sprite_position[1] -= 8.0;
-                    }
-                    println!("{}   {}", sprite_position[0], sprite_position[1]);
+                    game_grid.print_space(0, 0);
                 }
 
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Up) {
@@ -655,8 +720,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     
                     game_grid.print_grid();
-                    // let my_bool = game_grid.check_win();
-                    // println!("{:?}", my_bool)
                 
 
 
@@ -818,10 +881,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     // this uses instanced drawing, but it would also be okay
                     // to draw 6 * sprites.len() vertices and use modular arithmetic
                     // to figure out which sprite we're drawing.
-                    rpass.draw(0..6, (curr_sprite_index as u32)..(curr_sprite_index as u32)+1);
-                    // rpass.draw(0..6, (curr_cell_index as u32)..(curr_cell_index as u32)+1);
-                    // rpass.draw(0..6, (curr_sprite_index as u32)..(curr_sprite_index as u32)+1);
-                    rpass.draw(0..6, 32..(curr_cell_index as u32));
+                    
+
+                    rpass.draw(0..6, 1..201) ;
 
                     
                 }
