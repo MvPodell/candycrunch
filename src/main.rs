@@ -3,12 +3,14 @@
 use bytemuck::{Pod, Zeroable};
 use rand::Rng;
 // use image::math::Rect;
+use image::math::Rect;
 use std::{borrow::Cow, mem};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
+use num::abs;
 
 mod input;
 
@@ -99,7 +101,7 @@ impl GameGrid {
         }
     }
 
-    fn fill_space(&mut self, x: usize, y: usize, color: &'static str,) {
+    fn fill_space(&mut self, x: usize, y: usize, color: &'static str) {
         if x < 10 && y < 20 {
             self.grid[y][x].filled = true;
             self.grid[y][x].color = color;
@@ -109,10 +111,45 @@ impl GameGrid {
     fn print_space(&self, x: usize, y: usize) {
         if x < 10 && y < 20 {
             let space = &self.grid[y][x];
-            println!("x: {}, y: {}, color: {}, filled: {}", x, y, space.color, space.filled);
+            println!(
+                "x: {}, y: {}, color: {}, filled: {}",
+                x, y, space.color, space.filled
+            );
         } else {
             println!("Invalid indices");
         }
+    }
+
+    fn point_occupied(&self, grid_x: f64, grid_y: f64) -> bool {
+        if grid_x < 10.0 && grid_y < 20.0 {
+            self.grid[grid_y as usize][grid_x as usize].filled
+        } else {
+            false // Coordinates out of bounds
+        }
+    }
+
+    fn swap_colors(&mut self, x_coord: f32, y_coord: f32, last_clicked: (f32, f32)) {
+        let (last_x, last_y) = last_clicked;
+        
+        let color1 = self.grid[y_coord as usize][x_coord as usize].color;
+        let color2 = self.grid[last_y as usize][last_x as usize].color;
+        // swap the colors
+        self.grid[y_coord as usize][x_coord as usize].color = color2;
+        self.grid[last_y as usize][last_x as usize].color = color1;
+    }
+
+    fn get_color_coords(&self, sprite_col: usize, sprite_row: usize)-> [f32; 4] {
+        let color = match self.grid[sprite_col][sprite_row].color {
+            "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
+            "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            "light blue" => [0.0 / 23.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            // Add cases for other colors
+            _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
+        };
+        color
     }
 
     fn check_win(&self) -> bool {
@@ -206,8 +243,6 @@ impl GameGrid {
 
         false // No four consecutive spaces found
     }
-
-    
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -225,36 +260,6 @@ const SPRITES: SpriteOption = SpriteOption::Uniform;
 const SPRITES: SpriteOption = SpriteOption::VertexBuffer;
 #[cfg(all(feature = "vbuf", feature = "uniform"))]
 compile_error!("Can't choose both vbuf and uniform sprite features");
-
-// #[cfg(not(feature = "webgl"))]
-// const USE_STORAGE: bool = true;
-// #[cfg(feature = "webgl")]
-// const USE_STORAGE: bool = false;
-
-// impl GPUSprite {
-//     // Constructor method to create a new GPUSprite
-//     fn new(left_x: f32, left_y: f32, width_px: f32, height_px: f32) -> Self {
-//         GPUSprite {
-//             screen_region: [left_x, left_y, width_px, height_px],
-//             sheet_region: [left_x / 150.0, left_y / 227.0, width_px/ 150.0, height_px / 227.0],
-//         }
-//     }
-// }
-
-// impl Grid {
-//     // Function to check if the elements are 0 or 1
-//     fn check_elements(&self, ) -> bool {
-//         for row in self.rows.iter() {
-//             for &element in row.iter() {
-//                 if element != Occupation::Empty {
-//                     return false; // Element is occupied
-//                 }
-//             }
-//         }
-//         true // All elements are either 0 or 1, return true
-//     }
-
-// }
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let size = window.inner_size();
@@ -472,7 +477,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     surface.configure(&device, &config);
 
-    let (sprite_tex, _sprite_img) = load_texture("content/blocks3.png", None, &device, &queue)
+    let (sprite_tex, _sprite_img) = load_texture("content/blocks7.png", None, &device, &queue)
         .await
         .expect("Couldn't load spritesheet texture");
     let view_sprite = sprite_tex.create_view(&wgpu::TextureViewDescriptor::default());
@@ -493,10 +498,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         ],
     });
 
-    
     let camera = GPUCamera {
-        screen_pos: [0.0, 0.0],
-        screen_size: [256.0, 192.0],
+        screen_pos: [80.0, 0.0],
+        screen_size: [80.0, 160.0],
     };
     let buffer_camera = device.create_buffer(&wgpu::BufferDescriptor {
         label: None,
@@ -504,118 +508,132 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
-    
-    let mut sprites: Vec<GPUSprite> = vec![ 
+
+    let mut sprites: Vec<GPUSprite> = vec![
         // these sprites initial locations are determined by sprite_position_x
         // screen_region [x,y,z,w] = top left corner x, top left corner y, width, height
         // sheet_region [x,y,z,w] = divided by spritesheet width, divided by spritesheet height, divided by spritesheet width, divided by spritesheet height, divided by spritesheet width, divided by spritesheet height,
-        
+        GPUSprite {
+            screen_region: [0.0, 0.0, 8.0, 8.0],
+            sheet_region: [0.0 / 80.0, 0.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+        },
     ];
-    // white cell 1
+    // sprite template
     let sprite1 = GPUSprite {
-        screen_region: [128.0, 0.0, 8.0, 8.0],
-        sheet_region: [128.0 / 150.0, 0.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+        screen_region: [0.0, 0.0, 8.0, 8.0],
+        sheet_region: [0.0 / 80.0, 0.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
     };
-    // dark blue cell 2
-    let sprite2 = GPUSprite {
-        screen_region: [128.0, 32.0, 8.0, 8.0],
-        sheet_region: [128.0 / 150.0, 32.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
-    };
-    // light blue cell 3
-    let sprite3 = GPUSprite {
-        screen_region: [128.0, 64.0, 8.0, 8.0],
-        sheet_region: [128.0 / 150.0, 64.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
-    };
-
 
     let mut input = input::Input::default();
     let mut game_grid = GameGrid::new();
-
-    let mut rng = rand::thread_rng();
-    let random_number: u32 = rng.gen_range(0..=2);
-
-    // for _ in 0..10{
-    //    sprites.push(sprite3); 
-    // }
-    // game_grid.fill_space(0, 0, "light blue");
-    
+    // Initialize color counters
+    let mut color_counters: [u32; 6] = [0; 6];
 
     let mut x: f32 = 80.0;
     let mut y: f32 = 152.0;
+
+    // loop through every slot in the grid
     for _col in 0..10 {
         for _row in 0..20 {
+            // generate a random number between 0 and 2. This number will be used to select the color of the sprite
             let mut rng = rand::thread_rng();
-            let random_number: u32 = rng.gen_range(0..=2);
+            let mut random_number: u32 = rng.gen_range(0..=5);
             let mut sprite: GPUSprite = sprite1;
-            
+
+            // convert pixels to grid units
             let (grid_x, grid_y) = screen_to_grid(x, y);
 
-            println!("{}", random_number);
-            // the sprites being chosen
+            // println!("{}", random_number);
+
+            // Check if placing more than three of the same color in a row
+            if color_counters[random_number as usize] >= 3 {
+                // If more than three, select a different color
+                let mut new_random_number = random_number;
+                while new_random_number == random_number {
+                    new_random_number = rng.gen_range(0..=5);
+                }
+                random_number = new_random_number;
+            }
+
+            // Increment the counter for the chosen color
+            color_counters[random_number as usize] += 1;
+
+            // Reset the counters for other colors
+            for i in 0..6 {
+                if i != random_number as usize {
+                    color_counters[i] = 0;
+                }
+            }
+
+            // set the color of the sprite according to the random number generated
             match random_number {
-                0 =>{
-                    // white cell 1
+                0 => {
+                    // set the color of the sprite to white
                     sprite = GPUSprite {
                         screen_region: [x, y, 8.0, 8.0],
-                        sheet_region: [128.0 / 150.0, 0.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                        sheet_region: [0.0 / 80.0, 0.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
                     };
-                    game_grid.fill_space(grid_x, grid_y,  "white");
-                    
-                } 
-                1 =>{
-                    // dark blue 2
+                    game_grid.fill_space(grid_x, grid_y, "white");
+                }
+                1 => {
+                    // set the color of the sprite to dark blue
                     sprite = GPUSprite {
                         screen_region: [x, y, 8.0, 8.0],
-                        sheet_region: [128.0 / 150.0, 32.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                        sheet_region: [0.0 / 80.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
                     };
-                    game_grid.fill_space(grid_x, grid_y,  "dark blue");
-                } 
-                2 =>{
-                    // light blue cell 3
-                    let sprite = GPUSprite {
+                    game_grid.fill_space(grid_x, grid_y, "dark blue");
+                }
+                2 => {
+                    // set the color of the sprite to light blue
+                    sprite = GPUSprite {
                         screen_region: [x, y, 8.0, 8.0],
-                        sheet_region: [128.0 / 150.0, 64.0 / 227.0, 8.0 / 150.0, 8.0/ 227.0]
+                        sheet_region: [0.0 / 80.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
                     };
-                    game_grid.fill_space(grid_x, grid_y,  "light blue");
-                } 
+                    game_grid.fill_space(grid_x, grid_y, "light blue");
+                }
+                3 => {
+                    // set the color of the sprite to light orange
+                    sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+                    };
+                    game_grid.fill_space(grid_x, grid_y, "light orange");
+                }
+                4 => {
+                    // set the color of the sprite to dark orange
+                    sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+                    };
+                    game_grid.fill_space(grid_x, grid_y, "dark orange");
+                }
+                5 => {
+                    // set the color of the sprite to white with orange
+                    sprite = GPUSprite {
+                        screen_region: [x, y, 8.0, 8.0],
+                        sheet_region: [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+                    };
+                    game_grid.fill_space(grid_x, grid_y, "white orange");
+                }
                 _ => println!("Random number is out of range"),
             }
 
-            
-        
-
-            
-            game_grid.print_space(grid_x,grid_y);
+            // game_grid.print_space(grid_x, grid_y);
             sprites.push(sprite);
-            y-= 8.0;
-
+            y -= 8.0;
         }
 
         x += 8.0;
         y = 152.0;
     }
 
-    
-
-
-    let window_width = config.width as f32;
-    // let window_height = config.height as f32;
-
-    // here divide by a number to create the number of grids
-    let cell_width = 8.0;
-    // let cell_height = window_height / 152.0;
-
-    // Initialize sprite positions within the grid
-
-    let mut sprite_position: [f32; 2] = [120.0, 152.0];
-
-    // current sprite
-    let mut curr_sprite_index = 0;
-    let mut curr_cell_index = 32;
-
-    // initialize vertical position
-    let mut vertical_position: f32 = 0.0;
-    // let scroll_speed: f32 = 1.0;
+    let mut counter = 0;
+    let mut last_clicked = (x, y);
+    let mut last_cell_clicked = 0;
+    let mut last_y = 0.0;
+    let mut last_x = 0.0;
+    let mut color1 = [0.0,0.0,0.0,0.0];
+    let mut color2 = [0.0,0.0,0.0,0.0];
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
 
@@ -661,13 +679,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     queue.write_buffer(&buffer_camera, 0, bytemuck::bytes_of(&camera));
     queue.write_buffer(&buffer_sprite, 0, bytemuck::cast_slice(&sprites));
 
-
-
-
-    // let mut game_over = false;
-    // let mut show_end_screen = false;
-    // let mut win_color = "".to_string();
-
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
@@ -683,164 +694,58 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 window.request_redraw();
             }
             Event::RedrawRequested(_) => {
-                
-                if input.is_key_pressed(winit::event::VirtualKeyCode::Space) {
-                    curr_sprite_index += 1;
-                    if curr_sprite_index % 4 == 0 {
-                        curr_sprite_index -= 4
-                    }
-
-                }
-                if input.is_key_pressed(winit::event::VirtualKeyCode::Left) {
-                    sprite_position[0] -= cell_width;
-
-                    if sprite_position[0] <= 80.0 {
-                        sprite_position[0] = 80.0;
-                    }
-                    println!("{}   {}", sprite_position[0], sprite_position[1]);
-                }
-
-
-                if input.is_key_pressed(winit::event::VirtualKeyCode::Right) {
-
-                    // println!("{}", window_width);
-                    if sprite_position[0] < 152.0 {
-                        sprite_position[0] += cell_width;
-                    }
-                    println!("{}   {}", sprite_position[0], sprite_position[1]);
-                }
-
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
-
                     game_grid.print_space(0, 0);
                 }
 
                 if input.is_key_pressed(winit::event::VirtualKeyCode::Up) {
-
-
-                    
                     game_grid.print_grid();
-                
-
-
                 }
 
-                //update sprite position
-                sprites[curr_sprite_index].screen_region[0] = sprite_position[0];
-                sprites[curr_sprite_index].screen_region[1] = sprite_position[1];
-
-                // vertical_position += scroll_speed; // You can adjust the scroll speed as needed
-                
-                let curr_x = sprites[curr_sprite_index].screen_region[0];
-                let mut curr_y = sprites[curr_sprite_index].screen_region[1];
-                let mut collision = false;
-                let mut y_being_checked = 0.0;
-
-                //  check if the current location has a sprite in it by looping through coins up to the current coin
-                // for curr in 1..curr_sprite_index {
-                //     let x = sprites[curr].screen_region[0];
-                //     let y = sprites[curr].screen_region[1];
-                //     // println!("x{}   {}", x, curr_x);
-                //     // println!("y{}   curry{}", y, curr_y);
-                //     if x == curr_x && y == curr_y {
-                //         // Update the screen_region of the current sprite
-                //         y_being_checked = y;
-                //         collision = true;
-                //     } 
-                // }
-
-
-
-                if collision {
-                    sprites[curr_cell_index].screen_region[0] = curr_x;
-                    sprites[curr_cell_index].screen_region[1] = curr_y;
-
-                    if curr_sprite_index % 2 == 0 {
-                        println!("{} , {}" , (sprite_position[0] as usize - 80) / 8, 23 - sprite_position[1] as usize / 8 );
-                        game_grid.fill_space((sprite_position[0] as usize - 80) / 8, 23 - sprite_position[1] as usize / 8,  "yellow");
-                        }
-    
-                    else{
-                        println!("{} , {}" , (sprite_position[0] as usize - 80) / 8, 23 - sprite_position[1] as usize / 8);
-                        game_grid.fill_space((sprite_position[0] as usize - 80) / 8, 23 - sprite_position[1] as usize / 8,  "red");
-                    }
-
-                     // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
-                    sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
-                    sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
-
-                    let difference = 4 - (curr_sprite_index % 4);
-                    curr_sprite_index += difference;
-
-                    if curr_sprite_index >= 27 {
-                        curr_sprite_index = 0; // Wrap around to the first sprite
-                    }
-                    // sprites[curr_sprite_index].screen_region[1] = camera.screen_size[1];
-                    vertical_position = 0.0;
-                    curr_cell_index +=1;
-
-                    // check if the piece has hit the bottom of the screen
-                } else if sprite_position[1] <= 0.0 {
-                    // fill cell at x value of curr sprite
-
-                    sprites[curr_sprite_index].screen_region[1] = 0.0;
-                    sprite_position[1] = 0.0;
+                if input.is_mouse_released(winit::event::MouseButton::Left) {
+                    let mouse_pos = input.mouse_pos();
+                    let (mouse_x_norm, mouse_y_norm) = ((mouse_pos.x / 32.0),
+                                                        (mouse_pos.y / 32.0));  
                     
-                     // check if the current location has a sprite in it
-                for curr_cell_index in 32..sprites.len() {
-                    let x = sprites[curr_cell_index].screen_region[0];
-                    let y = sprites[curr_cell_index].screen_region[1];
-                    if x == curr_x && y == curr_y {
-                        // Update the screen_region of the current sprite
-                        curr_y += 8.0;
-                        
+
+                    // in these calculations, mouse_x_norm is the column, mouse_y_norm is the row
+                    let row = mouse_y_norm.floor() as usize;
+                    let column = mouse_x_norm.floor() as usize;
+
+                    // check for swap
+                    // if the counter is even, then save the clicked coords
+                    if counter % 2 == 0 {
+                        last_clicked = (mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32);
+                        last_cell_clicked = column * 20 + row + 1;
                     } 
-                    
-                }
+                    // if counter is odd, then swap current click with saved coords
+                    else {
+                        println!("swap colors!");
+                        // swap the sprite locations
+                        let curr_cell = column * 20 + row + 1;
+                        let diff = curr_cell as f32 - last_cell_clicked as f32;
 
+                        // only swap if they are one apart
+                        if abs(diff) == 1.0 || abs(diff) == 20.0 {
+                            // get colors
+                            (last_x, last_y) = last_clicked;
+                            color1 = game_grid.get_color_coords(mouse_y_norm.floor() as usize, mouse_x_norm.floor() as usize,);
+                            color2 = game_grid.get_color_coords(last_y as usize, last_x as usize);
+                            
+                            // update the colors in the sprites vec
+                            sprites[curr_cell as usize].sheet_region = color2;
+                            sprites[last_cell_clicked as usize].sheet_region = color1;
 
-                    sprites[curr_cell_index].screen_region[0] = curr_x;
-                    sprites[curr_cell_index].screen_region[1] = curr_y;
-
-                    if curr_sprite_index % 2 == 0 {
-                        println!("{} , {}" , (sprite_position[0] as usize - 80) / 8, 19 - sprite_position[1] as usize / 8 );
-                        game_grid.fill_space((sprite_position[0] as usize - 80) / 8, 19 - sprite_position[1] as usize / 8,  "yellow");
+                            // update the colors in the grid
+                            game_grid.swap_colors(mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32, last_clicked);
+                        } else {
+                            println!("Invalid click! Can only click tiles one apart.");
                         }
-    
-                    else{
-                        println!("{} , {}" , (sprite_position[0] as usize - 80) / 8, 19 - sprite_position[1] as usize / 8);
-                        game_grid.fill_space((sprite_position[0] as usize - 80) / 8, 19 - sprite_position[1] as usize / 8,  "red");
+                        
                     }
-                    
-
-                    // [128.0 / 150.0, 64.0 / 192.0, 8.0 / 150.0, 8.0/ 227.0]
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
-                    sprites[curr_cell_index].sheet_region[0] = 128.0 / 150.0;
-                    // println!("{}", sprites[curr_cell_index].sheet_region[0]);
-                    sprites[curr_cell_index].sheet_region[1] = sprites[curr_sprite_index].sheet_region[1];
-
-                    let difference = 4 - (curr_sprite_index % 4);
-                    curr_sprite_index += difference;
-
-                    if curr_sprite_index >= 27 {
-                        curr_sprite_index = 0; // Wrap around to the first sprite
-                    }
-                    // sprites[curr_sprite_index].screen_region[1] = camera.screen_size[1];
-                    vertical_position = 0.0;
-                    curr_cell_index +=1;
-
-                    sprite_position[0] = 120.0;
-                    sprite_position[1] = 152.0;
+                    counter+=1;
                 }
 
-
-
-
-                // Update the Y-coordinate of each sprite
-                sprites[curr_sprite_index].screen_region[1] = sprites[curr_sprite_index].screen_region[1];
-                
                 // Then send the data to the GPU!
                 input.next_frame();
 
@@ -869,8 +774,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         depth_stencil_attachment: None,
                     });
 
-
-                    
                     rpass.set_pipeline(&render_pipeline);
                     if SPRITES == SpriteOption::VertexBuffer {
                         rpass.set_vertex_buffer(0, buffer_sprite.slice(..));
@@ -881,14 +784,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     // this uses instanced drawing, but it would also be okay
                     // to draw 6 * sprites.len() vertices and use modular arithmetic
                     // to figure out which sprite we're drawing.
-                    
 
-                    rpass.draw(0..6, 1..201) ;
-
-                    
+                    rpass.draw(0..6, 0..201);
                 }
 
-                
                 queue.submit(Some(encoder.finish()));
                 frame.present();
                 window.request_redraw();
@@ -924,7 +823,22 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
 fn main() {
     let event_loop = EventLoop::new();
-    let window = winit::window::Window::new(&event_loop).unwrap();
+
+    // Define the desired aspect ratio
+    let aspect_ratio = 80.0 / 160.0;
+
+    // Set a fixed width for the window
+    let window_width = 320.0; // For example, you can use 320 pixels width
+
+    // Calculate the corresponding height based on the aspect ratio
+    let window_height = window_width / aspect_ratio;
+
+    // Create the window with the calculated dimensions
+    let window = winit::window::WindowBuilder::new()
+        .with_inner_size(winit::dpi::LogicalSize::new(window_width, window_height))
+        .build(&event_loop)
+        .unwrap();
+
     #[cfg(not(target_arch = "wasm32"))]
     {
         env_logger::init();
@@ -1009,3 +923,32 @@ async fn load_texture(
     );
     Ok((texture, img))
 }
+
+// fn update_colors(sprite_1_index: usize, sprite_1_row: usize, sprite_1_col: usize, sprite_2_index: usize, sprite_2_row: usize, sprite_2_col: usize, game_grid: GameGrid, sprites: &mut Vec<GPUSprite>) {
+//     let color1 = match game_grid.grid[sprite_1_row][sprite_1_col].color {
+//         "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "light blue" => [0.0 / 23.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         // Add cases for other colors
+//         _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
+//     };
+
+//     let color2 = match game_grid.grid[sprite_2_row][sprite_2_col].color {
+//         "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "light blue" => [0.0 / 23.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+//         // Add cases for other colors
+//         _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
+//     };
+
+//     // Update the color of the first sprite
+//     sprites[sprite_1_index].sheet_region = color1;
+//     // Update the color of the second sprite
+//     sprites[sprite_2_index].sheet_region = color2;
+// }
