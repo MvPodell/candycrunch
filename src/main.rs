@@ -660,8 +660,17 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     if elapsed_time >= game_duration {
                         game_over = true;
                         let bold_start = "\x1B[1m";
-                        let bold_end = "\x1B[0m"; // Reset text formatting
-                        println!("{}Game Over! Final Score: {}{}", bold_start, score, bold_end);
+                        let red_start = "\x1B[31m";
+                        let text_reset = "\x1B[0m"; // Reset text formatting
+
+                        // Print the entire line in bold
+                        print!("{}Game Over! Final Score: ", bold_start);
+
+                        // Print the score in red
+                        print!("{}{}{}", red_start, score, text_reset);
+
+                        // Print a newline to end the line
+                        println!();
                         *control_flow = ControlFlow::Exit;
                     }
 
