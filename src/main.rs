@@ -120,12 +120,8 @@ impl GameGrid {
         }
     }
 
-    fn point_occupied(&self, grid_x: f64, grid_y: f64) -> bool {
-        if grid_x < 10.0 && grid_y < 20.0 {
-            self.grid[grid_y as usize][grid_x as usize].filled
-        } else {
-            false // Coordinates out of bounds
-        }
+    fn point_color(&self, grid_x: usize, grid_y: usize) -> &'static str {
+        self.grid[grid_y][grid_x].color
     }
 
     fn swap_colors(&mut self, x_coord: f32, y_coord: f32, last_clicked: (f32, f32)) {
@@ -146,23 +142,45 @@ impl GameGrid {
             "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
             "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
             "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
+            "black" => [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
             // Add cases for other colors
             _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
         };
         color
     }
 
-    fn check_win(&self) -> bool {
-        // Check horizontally
-        for row in &self.grid {
-            let mut consecutive_count = 0;
-            let mut last_color = "";
+    fn color_is_black(&self, x: usize, y: usize) -> bool {
+        if x < 10 && y < 20 {
+            let color = self.grid[y][x].color;
+            return color == "black";
+        } else {
+            false
+        }
+    }
 
-            for space in row {
-                if space.filled && space.color == last_color {
+    fn set_black(&mut self, x: usize, y:usize) {
+        let color = "black";
+        self.grid[x][y].color = color;
+        // println!("color after {} for ({}, {})", self.grid[x][y].color, x, y);
+    }
+
+    fn check_blackout_horiz(&self) -> (usize, usize, usize) {
+        for row in 0..20 {
+            let mut consecutive_count = 1;
+            let mut last_color = "black";
+
+            for index in 0..10 {
+                let space = &self.grid[row][index];
+                // println!("{last_color}");
+                if space.filled && space.color == last_color && last_color != "black"{
                     consecutive_count += 1;
                     if consecutive_count == 4 {
-                        return true; // Four consecutive spaces found horizontally
+                        // println!("row{row} index{index}");
+                        if index < 4 {
+                            return (row + 1, row, index);
+                        } else {
+                            return (((index-3)*20) + row+1, row, index-3);
+                        }  
                     }
                 } else {
                     consecutive_count = 1;
@@ -170,19 +188,23 @@ impl GameGrid {
                 }
             }
         }
-
+        // return 202 to signify that there are not 4 in a row
+        return (202, 0, 0);
+    }
+    fn check_blackout_vert(&self) -> (usize, usize, usize) {
         // Check vertically
-        for col in 0..7 {
-            let mut consecutive_count = 0;
-            let mut last_color = "";
+        for col in 0..10 {
+            let mut consecutive_count = 1;
+            let mut last_color = "black";
 
-            for row in 0..6 {
+            for row in 0..20 {
                 let space = &self.grid[row][col];
 
-                if space.filled && space.color == last_color {
+                if space.filled && space.color == last_color && last_color != "black"{
                     consecutive_count += 1;
                     if consecutive_count == 4 {
-                        return true; // Four consecutive spaces found vertically
+                        // return the first index of the four in a column 
+                        return ((row-2) + (20*col), row-3, col);
                     }
                 } else {
                     consecutive_count = 1;
@@ -190,58 +212,8 @@ impl GameGrid {
                 }
             }
         }
-
-        // Check diagonally (top-left to bottom-right)
-        for start_row in 0..3 {
-            for start_col in 0..4 {
-                let mut consecutive_count = 0;
-                let mut last_color = "";
-
-                for step in 0..4 {
-                    let row = start_row + step;
-                    let col = start_col + step;
-
-                    let space = &self.grid[row][col];
-
-                    if space.filled && space.color == last_color {
-                        consecutive_count += 1;
-                        if consecutive_count == 4 {
-                            return true; // Four consecutive spaces found diagonally
-                        }
-                    } else {
-                        consecutive_count = 1;
-                        last_color = space.color;
-                    }
-                }
-            }
-        }
-
-        // Check diagonally (top-right to bottom-left)
-        for start_row in 0..3 {
-            for start_col in 3..7 {
-                let mut consecutive_count = 0;
-                let mut last_color = "";
-
-                for step in 0..4 {
-                    let row = start_row + step;
-                    let col = start_col - step;
-
-                    let space = &self.grid[row][col];
-
-                    if space.filled && space.color == last_color {
-                        consecutive_count += 1;
-                        if consecutive_count == 4 {
-                            return true; // Four consecutive spaces found diagonally
-                        }
-                    } else {
-                        consecutive_count = 1;
-                        last_color = space.color;
-                    }
-                }
-            }
-        }
-
-        false // No four consecutive spaces found
+        // return 202 to signify that there are not 4 in a column
+        return (202, 0, 0) // No four consecutive spaces found
     }
 }
 
@@ -634,6 +606,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut last_x = 0.0;
     let mut color1 = [0.0,0.0,0.0,0.0];
     let mut color2 = [0.0,0.0,0.0,0.0];
+    let mut score = 0;
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
 
@@ -711,7 +684,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     // in these calculations, mouse_x_norm is the column, mouse_y_norm is the row
                     let row = mouse_y_norm.floor() as usize;
                     let column = mouse_x_norm.floor() as usize;
+                    // println!("Current color: {}", game_grid.point_color(column, row));
 
+                    // game_grid.print_space(1, 1);
                     // check for swap
                     // if the counter is even, then save the clicked coords
                     if counter % 2 == 0 {
@@ -720,32 +695,69 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     } 
                     // if counter is odd, then swap current click with saved coords
                     else {
-                        println!("swap colors!");
-                        // swap the sprite locations
-                        let curr_cell = column * 20 + row + 1;
-                        let diff = curr_cell as f32 - last_cell_clicked as f32;
+                        let (last_x, last_y) = last_clicked;
+                        if !game_grid.color_is_black(last_x as usize, last_y as usize) && !game_grid.color_is_black(column, row){
+                            println!("swap colors!");
+                            // swap the sprite locations
+                            let curr_cell = column * 20 + row + 1;
+                            let diff = curr_cell as f32 - last_cell_clicked as f32;
 
-                        // only swap if they are one apart
-                        if abs(diff) == 1.0 || abs(diff) == 20.0 {
-                            // get colors
-                            (last_x, last_y) = last_clicked;
-                            color1 = game_grid.get_color_coords(mouse_y_norm.floor() as usize, mouse_x_norm.floor() as usize,);
-                            color2 = game_grid.get_color_coords(last_y as usize, last_x as usize);
-                            
-                            // update the colors in the sprites vec
-                            sprites[curr_cell as usize].sheet_region = color2;
-                            sprites[last_cell_clicked as usize].sheet_region = color1;
+                            // only swap if they are one apart
+                            if abs(diff) == 1.0 || abs(diff) == 20.0 {
+                                // get colors
+                                // (last_x, last_y) = last_clicked;
+                                color1 = game_grid.get_color_coords(mouse_y_norm.floor() as usize, mouse_x_norm.floor() as usize,);
+                                color2 = game_grid.get_color_coords(last_y as usize, last_x as usize);
+                                
+                                // update the colors in the sprites vec
+                                sprites[curr_cell as usize].sheet_region = color2;
+                                sprites[last_cell_clicked as usize].sheet_region = color1;
 
-                            // update the colors in the grid
-                            game_grid.swap_colors(mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32, last_clicked);
+                                // update the colors in the grid
+                                game_grid.swap_colors(mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32, last_clicked);
+                            } else {
+                                println!("Invalid click! Can only click tiles one apart.");
+                            }
                         } else {
-                            println!("Invalid click! Can only click tiles one apart.");
+                            println!("Invalid click! Cannot swap a tile with nothing!");
                         }
                         
+
+
+                        let (blackout_horiz, start_x, mut start_y) = game_grid.check_blackout_horiz();
+                        if blackout_horiz != 202 {
+                            // println!("Four in a row starting at {blackout_horiz}!");
+                            // set the four in a row to black
+                            // println!("Black region starts at {}", blackout_horiz);
+                            for i in (blackout_horiz..(blackout_horiz + 80)).step_by(20) {
+                                // set the sprite in the vec to black
+                                sprites[i].sheet_region = [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
+                                // set the color of the sprite in the grid to black
+                                game_grid.set_black(start_x, start_y);
+                                start_y+=1;
+                                // println!("Black? {}", game_grid.color_is_black(start_x, start_y));
+                                
+                            }
+                            score+=4;
+                        } 
+                        let (blackout_vert, mut start_x, start_y) = game_grid.check_blackout_vert();
+                        if blackout_vert != 202 {
+                            // println!("Four in a column starting at {blackout_vert}!");
+                            // set the four in a column to black 
+                            for i in blackout_vert..(blackout_vert + 4) {
+                                // set the sprite in the vec to black
+                                sprites[i].sheet_region = [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
+                                // set the color of the sprite in the grid to black
+                                // println!("{start_x}     {start_y}");
+                                game_grid.set_black(start_x, start_y);
+                                start_x += 1;
+                            }  
+                            score+=4; 
+                        }
                     }
                     counter+=1;
+                    println!("Current score: {score}");
                 }
-
                 // Then send the data to the GPU!
                 input.next_frame();
 
