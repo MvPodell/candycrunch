@@ -222,7 +222,7 @@ compile_error!("Can't choose both vbuf and uniform sprite features");
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let size = window.inner_size();
     let start_time = Instant::now();
-    let game_duration = Duration::from_secs(30); // 30 seconds
+    let game_duration = Duration::from_secs(45); // 45 seconds
     let mut game_over = false;
 
     log::info!("Use sprite mode {:?}", SPRITES);
@@ -659,7 +659,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     let elapsed_time = start_time.elapsed();
                     if elapsed_time >= game_duration {
                         game_over = true;
-                        println!("Game Over! Final Score: {}", score);
+                        let bold_start = "\x1B[1m";
+                        let bold_end = "\x1B[0m"; // Reset text formatting
+                        println!("{}Game Over! Final Score: {}{}", bold_start, score, bold_end);
                         *control_flow = ControlFlow::Exit;
                     }
 
@@ -673,15 +675,15 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     if input.is_mouse_released(winit::event::MouseButton::Left) {
                         let mouse_pos = input.mouse_pos();
+                        // change the divisor to 32.0 for larger screens? 
                         let (mouse_x_norm, mouse_y_norm) =
-                            ((mouse_pos.x / 32.0), (mouse_pos.y / 32.0));
+                            ((mouse_pos.x / 64.0), (mouse_pos.y / 64.0));
 
                         // in these calculations, mouse_x_norm is the column, mouse_y_norm is the row
                         let row = mouse_y_norm.floor() as usize;
                         let column = mouse_x_norm.floor() as usize;
                         // println!("Current color: {}", game_grid.point_color(column, row));
 
-                        // game_grid.print_space(1, 1);
                         // check for swap
                         // if the counter is even, then save the clicked coords
                         if counter % 2 == 0 {
