@@ -1,27 +1,19 @@
-// TODO: remove SpriteOption if it doesn't do anything
-
 use bytemuck::{Pod, Zeroable};
+use num::abs;
 use rand::Rng;
-// use image::math::Rect;
-use image::math::Rect;
-use std::{borrow::Cow, mem};
+use std::{
+    borrow::Cow,
+    mem,
+    time::{Duration, Instant},
+};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
-use num::abs;
 
 mod input;
 
-#[repr(C)]
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum Occupation {
-    Empty = 0,
-    // White = 1,
-    // Light = 2,
-    // Dark = 3,
-}
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
@@ -40,17 +32,13 @@ struct GPUSprite {
 
 #[derive(Copy, Clone)]
 struct Space {
-    x_space: f32,
-    y_space: f32,
     color: &'static str, // Use a string slice for color
     filled: bool,
 }
 
 impl Space {
-    fn new(x: f32, y: f32, color: &'static str) -> Self {
+    fn new(color: &'static str) -> Self {
         Space {
-            x_space: x,
-            y_space: y,
             color,
             filled: false,
         }
@@ -69,16 +57,14 @@ fn screen_to_grid(x: f32, y: f32) -> (usize, usize) {
 
 impl GameGrid {
     fn new() -> Self {
-        let mut grid = [[Space::new(0.0, 0.0, "empty"); 10]; 20];
+        let mut grid = [[Space::new("empty"); 10]; 20];
 
         // Initialize the grid with space objects
         let mut y_cord = 518.0;
         let mut x_cord = 98.0;
         for row in 0..20 {
             for col in 0..10 {
-                let x = x_cord; // Adjust X coordinate as needed
-                let y = y_cord; // Adjust Y coordinate as needed
-                grid[row][col] = Space::new(x, y, "nah");
+                grid[row][col] = Space::new("nah");
                 y_cord -= 88.0;
             }
             x_cord += 98.0;
@@ -120,13 +106,13 @@ impl GameGrid {
         }
     }
 
-    fn point_color(&self, grid_x: usize, grid_y: usize) -> &'static str {
-        self.grid[grid_y][grid_x].color
-    }
+    // fn point_color(&self, grid_x: usize, grid_y: usize) -> &'static str {
+    //     self.grid[grid_y][grid_x].color
+    // }
 
     fn swap_colors(&mut self, x_coord: f32, y_coord: f32, last_clicked: (f32, f32)) {
         let (last_x, last_y) = last_clicked;
-        
+
         let color1 = self.grid[y_coord as usize][x_coord as usize].color;
         let color2 = self.grid[last_y as usize][last_x as usize].color;
         // swap the colors
@@ -134,7 +120,7 @@ impl GameGrid {
         self.grid[last_y as usize][last_x as usize].color = color1;
     }
 
-    fn get_color_coords(&self, sprite_col: usize, sprite_row: usize)-> [f32; 4] {
+    fn get_color_coords(&self, sprite_col: usize, sprite_row: usize) -> [f32; 4] {
         let color = match self.grid[sprite_col][sprite_row].color {
             "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
             "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
@@ -158,7 +144,7 @@ impl GameGrid {
         }
     }
 
-    fn set_black(&mut self, x: usize, y:usize) {
+    fn set_black(&mut self, x: usize, y: usize) {
         let color = "black";
         self.grid[x][y].color = color;
         // println!("color after {} for ({}, {})", self.grid[x][y].color, x, y);
@@ -172,15 +158,15 @@ impl GameGrid {
             for index in 0..10 {
                 let space = &self.grid[row][index];
                 // println!("{last_color}");
-                if space.filled && space.color == last_color && last_color != "black"{
+                if space.filled && space.color == last_color && last_color != "black" {
                     consecutive_count += 1;
                     if consecutive_count == 4 {
                         // println!("row{row} index{index}");
                         if index < 4 {
                             return (row + 1, row, index);
                         } else {
-                            return (((index-3)*20) + row+1, row, index-3);
-                        }  
+                            return (((index - 3) * 20) + row + 1, row, index - 3);
+                        }
                     }
                 } else {
                     consecutive_count = 1;
@@ -200,11 +186,11 @@ impl GameGrid {
             for row in 0..20 {
                 let space = &self.grid[row][col];
 
-                if space.filled && space.color == last_color && last_color != "black"{
+                if space.filled && space.color == last_color && last_color != "black" {
                     consecutive_count += 1;
                     if consecutive_count == 4 {
-                        // return the first index of the four in a column 
-                        return ((row-2) + (20*col), row-3, col);
+                        // return the first index of the four in a column
+                        return ((row - 2) + (20 * col), row - 3, col);
                     }
                 } else {
                     consecutive_count = 1;
@@ -213,7 +199,7 @@ impl GameGrid {
             }
         }
         // return 202 to signify that there are not 4 in a column
-        return (202, 0, 0) // No four consecutive spaces found
+        return (202, 0, 0); // No four consecutive spaces found
     }
 }
 
@@ -235,6 +221,9 @@ compile_error!("Can't choose both vbuf and uniform sprite features");
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let size = window.inner_size();
+    let start_time = Instant::now();
+    let game_duration = Duration::from_secs(30); // 30 seconds
+    let mut game_over = false;
 
     log::info!("Use sprite mode {:?}", SPRITES);
 
@@ -602,10 +591,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut counter = 0;
     let mut last_clicked = (x, y);
     let mut last_cell_clicked = 0;
-    let mut last_y = 0.0;
-    let mut last_x = 0.0;
-    let mut color1 = [0.0,0.0,0.0,0.0];
-    let mut color2 = [0.0,0.0,0.0,0.0];
+    let mut color1 = [0.0, 0.0, 0.0, 0.0];
+    let mut color2 = [0.0, 0.0, 0.0, 0.0];
     let mut score = 0;
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
@@ -667,97 +654,120 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 window.request_redraw();
             }
             Event::RedrawRequested(_) => {
-                if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
-                    game_grid.print_space(0, 0);
-                }
-
-                if input.is_key_pressed(winit::event::VirtualKeyCode::Up) {
-                    game_grid.print_grid();
-                }
-
-                if input.is_mouse_released(winit::event::MouseButton::Left) {
-                    let mouse_pos = input.mouse_pos();
-                    let (mouse_x_norm, mouse_y_norm) = ((mouse_pos.x / 32.0),
-                                                        (mouse_pos.y / 32.0));  
-                    
-
-                    // in these calculations, mouse_x_norm is the column, mouse_y_norm is the row
-                    let row = mouse_y_norm.floor() as usize;
-                    let column = mouse_x_norm.floor() as usize;
-                    // println!("Current color: {}", game_grid.point_color(column, row));
-
-                    // game_grid.print_space(1, 1);
-                    // check for swap
-                    // if the counter is even, then save the clicked coords
-                    if counter % 2 == 0 {
-                        last_clicked = (mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32);
-                        last_cell_clicked = column * 20 + row + 1;
-                    } 
-                    // if counter is odd, then swap current click with saved coords
-                    else {
-                        let (last_x, last_y) = last_clicked;
-                        if !game_grid.color_is_black(last_x as usize, last_y as usize) && !game_grid.color_is_black(column, row){
-                            println!("swap colors!");
-                            // swap the sprite locations
-                            let curr_cell = column * 20 + row + 1;
-                            let diff = curr_cell as f32 - last_cell_clicked as f32;
-
-                            // only swap if they are one apart
-                            if abs(diff) == 1.0 || abs(diff) == 20.0 {
-                                // get colors
-                                // (last_x, last_y) = last_clicked;
-                                color1 = game_grid.get_color_coords(mouse_y_norm.floor() as usize, mouse_x_norm.floor() as usize,);
-                                color2 = game_grid.get_color_coords(last_y as usize, last_x as usize);
-                                
-                                // update the colors in the sprites vec
-                                sprites[curr_cell as usize].sheet_region = color2;
-                                sprites[last_cell_clicked as usize].sheet_region = color1;
-
-                                // update the colors in the grid
-                                game_grid.swap_colors(mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32, last_clicked);
-                            } else {
-                                println!("Invalid click! Can only click tiles one apart.");
-                            }
-                        } else {
-                            println!("Invalid click! Cannot swap a tile with nothing!");
-                        }
-                        
-
-
-                        let (blackout_horiz, start_x, mut start_y) = game_grid.check_blackout_horiz();
-                        if blackout_horiz != 202 {
-                            // println!("Four in a row starting at {blackout_horiz}!");
-                            // set the four in a row to black
-                            // println!("Black region starts at {}", blackout_horiz);
-                            for i in (blackout_horiz..(blackout_horiz + 80)).step_by(20) {
-                                // set the sprite in the vec to black
-                                sprites[i].sheet_region = [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
-                                // set the color of the sprite in the grid to black
-                                game_grid.set_black(start_x, start_y);
-                                start_y+=1;
-                                // println!("Black? {}", game_grid.color_is_black(start_x, start_y));
-                                
-                            }
-                            score+=4;
-                        } 
-                        let (blackout_vert, mut start_x, start_y) = game_grid.check_blackout_vert();
-                        if blackout_vert != 202 {
-                            // println!("Four in a column starting at {blackout_vert}!");
-                            // set the four in a column to black 
-                            for i in blackout_vert..(blackout_vert + 4) {
-                                // set the sprite in the vec to black
-                                sprites[i].sheet_region = [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
-                                // set the color of the sprite in the grid to black
-                                // println!("{start_x}     {start_y}");
-                                game_grid.set_black(start_x, start_y);
-                                start_x += 1;
-                            }  
-                            score+=4; 
-                        }
+                if !game_over {
+                    // handle timing
+                    let elapsed_time = start_time.elapsed();
+                    if elapsed_time >= game_duration {
+                        game_over = true;
+                        println!("Game Over! Final Score: {}", score);
+                        *control_flow = ControlFlow::Exit;
                     }
-                    counter+=1;
-                    println!("Current score: {score}");
+
+                    if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
+                        game_grid.print_space(0, 0);
+                    }
+
+                    if input.is_key_pressed(winit::event::VirtualKeyCode::Up) {
+                        game_grid.print_grid();
+                    }
+
+                    if input.is_mouse_released(winit::event::MouseButton::Left) {
+                        let mouse_pos = input.mouse_pos();
+                        let (mouse_x_norm, mouse_y_norm) =
+                            ((mouse_pos.x / 32.0), (mouse_pos.y / 32.0));
+
+                        // in these calculations, mouse_x_norm is the column, mouse_y_norm is the row
+                        let row = mouse_y_norm.floor() as usize;
+                        let column = mouse_x_norm.floor() as usize;
+                        // println!("Current color: {}", game_grid.point_color(column, row));
+
+                        // game_grid.print_space(1, 1);
+                        // check for swap
+                        // if the counter is even, then save the clicked coords
+                        if counter % 2 == 0 {
+                            // println!("first click!");
+                            last_clicked =
+                                (mouse_x_norm.floor() as f32, mouse_y_norm.floor() as f32);
+                            last_cell_clicked = column * 20 + row + 1;
+                        }
+                        // if counter is odd, then swap current click with saved coords
+                        else {
+                            let (last_x, last_y) = last_clicked;
+                            if !game_grid.color_is_black(last_x as usize, last_y as usize)
+                                && !game_grid.color_is_black(column, row)
+                            {
+                                // println!("swap colors!");
+                                // swap the sprite locations
+                                let curr_cell = column * 20 + row + 1;
+                                let diff = curr_cell as f32 - last_cell_clicked as f32;
+
+                                // only swap if they are one apart
+                                if abs(diff) == 1.0 || abs(diff) == 20.0 {
+                                    // get colors
+                                    // (last_x, last_y) = last_clicked;
+                                    color1 = game_grid.get_color_coords(
+                                        mouse_y_norm.floor() as usize,
+                                        mouse_x_norm.floor() as usize,
+                                    );
+                                    color2 = game_grid
+                                        .get_color_coords(last_y as usize, last_x as usize);
+
+                                    // update the colors in the sprites vec
+                                    sprites[curr_cell as usize].sheet_region = color2;
+                                    sprites[last_cell_clicked as usize].sheet_region = color1;
+
+                                    // update the colors in the grid
+                                    game_grid.swap_colors(
+                                        mouse_x_norm.floor() as f32,
+                                        mouse_y_norm.floor() as f32,
+                                        last_clicked,
+                                    );
+                                } else {
+                                    println!("Invalid click! Can only click tiles one apart.");
+                                }
+                            } else {
+                                println!("Invalid click! Cannot swap a tile with nothing!");
+                            }
+
+                            let (blackout_horiz, start_x, mut start_y) =
+                                game_grid.check_blackout_horiz();
+                            if blackout_horiz != 202 {
+                                // println!("Four in a row starting at {blackout_horiz}!");
+                                // set the four in a row to black
+                                // println!("Black region starts at {}", blackout_horiz);
+                                for i in (blackout_horiz..(blackout_horiz + 80)).step_by(20) {
+                                    // set the sprite in the vec to black
+                                    sprites[i].sheet_region =
+                                        [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
+                                    // set the color of the sprite in the grid to black
+                                    game_grid.set_black(start_x, start_y);
+                                    start_y += 1;
+                                    // println!("Black? {}", game_grid.color_is_black(start_x, start_y));
+                                }
+                                score += 4;
+                            }
+                            let (blackout_vert, mut start_x, start_y) =
+                                game_grid.check_blackout_vert();
+                            if blackout_vert != 202 {
+                                // println!("Four in a column starting at {blackout_vert}!");
+                                // set the four in a column to black
+                                for i in blackout_vert..(blackout_vert + 4) {
+                                    // set the sprite in the vec to black
+                                    sprites[i].sheet_region =
+                                        [0.0 / 80.0, 96.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0];
+                                    // set the color of the sprite in the grid to black
+                                    // println!("{start_x}     {start_y}");
+                                    game_grid.set_black(start_x, start_y);
+                                    start_x += 1;
+                                }
+                                score += 4;
+                            }
+                        }
+                        counter += 1;
+                        // println!("Current score: {score}");
+                    }
                 }
+
                 // Then send the data to the GPU!
                 input.next_frame();
 
@@ -935,32 +945,3 @@ async fn load_texture(
     );
     Ok((texture, img))
 }
-
-// fn update_colors(sprite_1_index: usize, sprite_1_row: usize, sprite_1_col: usize, sprite_2_index: usize, sprite_2_row: usize, sprite_2_col: usize, game_grid: GameGrid, sprites: &mut Vec<GPUSprite>) {
-//     let color1 = match game_grid.grid[sprite_1_row][sprite_1_col].color {
-//         "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "light blue" => [0.0 / 23.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         // Add cases for other colors
-//         _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
-//     };
-
-//     let color2 = match game_grid.grid[sprite_2_row][sprite_2_col].color {
-//         "white" => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "dark blue" => [0.0, 16.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "light blue" => [0.0 / 23.0, 32.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "light orange" => [0.0 / 80.0, 48.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "dark orange" => [0.0 / 80.0, 64.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         "white orange" => [0.0 / 80.0, 80.0 / 160.0, 8.0 / 80.0, 8.0 / 160.0],
-//         // Add cases for other colors
-//         _ => [0.0, 0.0, 8.0 / 80.0, 8.0 / 160.0], // Default to a color
-//     };
-
-//     // Update the color of the first sprite
-//     sprites[sprite_1_index].sheet_region = color1;
-//     // Update the color of the second sprite
-//     sprites[sprite_2_index].sheet_region = color2;
-// }
